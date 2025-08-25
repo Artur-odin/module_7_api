@@ -6,8 +6,6 @@ from io import BytesIO
 
 # Список доступных тегов
 ALLOWED_TAGS = ['sleep', 'jump', 'smile', 'fight', 'black', 'white', 'red', 'siamese', 'bengal']
-l = []
-
 
 def load_image(url):
     try:
@@ -21,19 +19,17 @@ def load_image(url):
         print(f"Ошибка при загрузке изображения: {e}")
         return None
 
-def teg_cate_url():
+def teg_cate_url(): # отдельная ф-я - на каждую кнопку можно указать разные варианты (только рандом или с тегом и рандом)
+    # открывается так же в новом окне через файл или кнопкой "Загрузить фото" рядом с combobox
     tag = tag_combobox.get()
     url = f"https://cataas.com/cat/{tag}" if tag else 'https://cataas.com/cat'
     open_new_window(url)
 
-def random_cat_url():
-    #open_new_window("https://cataas.com/cat")
+def random_cat_url(): # открывает кнопкой "Случайный котик" во вкладках основного окна
     tab = Frame(notebook)
     notebook.add(tab, text="Котик")
-
     close_button = Button(tab, text="✕", command=lambda: close_tab(tab))
     close_button.pack(anchor="ne")
-
     img = load_image("https://cataas.com/cat")
     if img:
         label = Label(tab, image=img)
@@ -42,10 +38,8 @@ def random_cat_url():
     notebook.select(tab)
     def close_tab(tab):
         notebook.forget(tab)
-
     
-
-def open_new_window(url):
+def open_new_window(url):# открывает любой URL что в него загрузят
     img = load_image(url)
     if img:
         new_window = Toplevel()
