@@ -1,5 +1,6 @@
 import requests
 from tkinter import *
+from tkinter import messagebox as mb
 from PIL import Image, ImageTk
 from io import BytesIO
 
@@ -7,29 +8,33 @@ def get_random_dog_image():
     try:
         response = requests.get('https://dog.ceo/api/breeds/image/random')
         response.raise_for_status()
-        ata = response.json()
+        data = response.json()
         return data['message']
-
     except Exception as e:
-
-    messagebox.showerror("Ошибка", f"Ошибка при запросе к API: {e}")
-    return None
+        mb.showerror("Ошибка", f"Ошибка при запросе к API: {e}")
 
 def show_image():
     image_url = get_random_dog_image()
     if image_url:
         try:
-            response = requests.get(image_url, stream=True)
-            response.raise_for_status()
-            img_data = BytesIO(response.content)
-            img = Image.open(img_data)
-            img.thumbnail((300, 300))
-            img = ImageTk.PhotoImage(img)
-            label.config(image=img)
-            label.image = img
+            
+            response = requests.get(image_url, stream=True)# 📡 Загружаем изображение по URL потоково (экономим память)
+           
+            response.raise_for_status() # ⚠️ Проверяем успешность запроса (вызовет исключение при ошибке)
+            
+            img_data = BytesIO(response.content)# 🔄 Конвертируем байты в файлоподобный объект для PIL
+            
+            img = Image.open(img_data)# 🖼️ Открываем изображение из байтов (создаем PIL Image объект)
+            
+            img.thumbnail((300, 300))# 📏 Уменьшаем размер до 300x300 пикселей (сохраняя пропорции)
+            
+            img = ImageTk.PhotoImage(img)# 🔄 Конвертируем PIL Image в формат понятный tkinter
+            
+            label.config(image=img)# 📺 Устанавливаем изображение в Label виджет
+            
+            label.image = img# 🔗 Сохраняем ссылку чтобы изображение не удалилось из памяти
         except requests.RequestException as e:
-
-messagebox.showerror("Ошибка", f"Не удалось загрузить изображение: {e}")
+            messagebox.showerror("Ошибка", f"Не удалось загрузить изображение: {e}")
 
 window = Tk()
 window.title("Картинки с собачками")
