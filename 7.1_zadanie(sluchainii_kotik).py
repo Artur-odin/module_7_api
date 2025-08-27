@@ -9,7 +9,7 @@ ALLOWED_TAGS = ['sleep', 'jump', 'smile', 'fight', 'black', 'white', 'red', 'sia
 
 def load_image(url):
     try:
-        response = requests.get(url)
+        response = requests.get(url, timeout=10)
         response.raise_for_status()
         image_data = BytesIO(response.content)
         img = Image.open(image_data)
@@ -30,7 +30,7 @@ def random_cat_url(): # открывает кнопкой "Случайный к
     notebook.add(tab, text="Котик")
     close_button = Button(tab, text="✕", command=lambda: close_tab(tab))
     close_button.pack(anchor="ne")
-    img = load_image("https://cataas.com/cat")
+    img = load_image('https://cataas.com/cat')
     if img:
         label = Label(tab, image=img)
         label.image = img
