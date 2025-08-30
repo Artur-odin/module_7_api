@@ -1,10 +1,17 @@
-from g4f.client import Client
+import asyncio
+from g4f.client import AsyncClient
 
-client = Client()
-response = client.images.generate(
-    model="flux",
-    prompt="конец человеческой цивилизации",
-    response_format="url"
-)
+async def main():
+    client = AsyncClient()
+    
+    response = await client.images.generate(
+        prompt="a white siamese cat",
+        model="flux",
+        response_format="url"
+        # Add any other necessary parameters
+    )
+    
+    image_url = response.data[0].url
+    print(f"Generated image URL: {image_url}")
 
-print(f"Generated image URL: {response.data[0].url}")
+asyncio.run(main())
