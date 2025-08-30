@@ -43,27 +43,37 @@ def start_progress():
     progress.start(30)
     window.after(3000, lambda: [progress.stop(), show_image()])
 
+def del_tabs():# ф-я удаления всех вкладок
+    for tab in notebook.tabs():
+        notebook.forget(tab)# можно индекс 0 указать, эффект тот-же.
+
 window = Tk()
 window.title("Случайное изображение")
+frame = ttk.Frame(window, padding=10)
+frame.pack(pady=10)
 
 status_label = ttk.Label(window, text="")
-status_label.pack(padx=10, pady=5)
+status_label.pack(padx=10, pady=(5, 5))
 
-button = ttk.Button(window, text="Загрузить изображение", command=start_progress)
-button.pack(padx=10, pady=10)
+button_1 = ttk.Button(frame, text="Загрузить изображение", command=start_progress)
+button_1.grid(row=0, column=1)
+button_2 = ttk.Button(frame, text="Очистить вкладки", command=del_tabs)# кнопка для удаления всех вкладок
+button_2.grid(row=0, column=2)
 
 progress = ttk.Progressbar(window, mode='determinate', length=300)
-progress.pack(padx=10, pady=5)
+progress.pack(padx=10, pady=(0, 5))
 
 width_label = ttk.Label(window, text="Ширина:")
-width_label.pack(side='left', padx=(10, 0))
+width_label.pack(side='left', padx=(10, 0), pady=(0, 5))
 width_spinbox = ttk.Spinbox(window, from_=200, to=500, increment=50, width=5)
-width_spinbox.pack(side='left', padx=(0, 10))
+width_spinbox.pack(side='left', padx=(0, 10), pady=(0, 5))
+width_spinbox.set(300)
 
 height_label = ttk.Label(window, text="Высота:")
-height_label.pack(side='left', padx=(10, 0))
+height_label.pack(side='left', padx=(10, 0), pady=(0, 5))
 height_spinbox = ttk.Spinbox(window, from_=200, to=500, increment=50, width=5)
-height_spinbox.pack(side='left', padx=(0, 10))
+height_spinbox.pack(side='left', padx=(0, 10), pady=(0, 5))
+height_spinbox.set(300)
 
 # Создаем отдельное окно для Notebook
 top_level_window = Toplevel(window)
