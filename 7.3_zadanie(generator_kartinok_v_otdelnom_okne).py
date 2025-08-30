@@ -5,9 +5,10 @@ from tkinter import ttk
 from io import BytesIO
 from PIL import Image, ImageTk
 import requests
-
+print()
 async def generate(prompt_user):
-    client = AsyncClient()
+    client = AsyncClient(provider=DeepInfra)
+    #client = AsyncClient()
     try:
         response = await client.images.generate(
             prompt=prompt_user,
@@ -39,6 +40,7 @@ def show_image(img, prompt_user):
     label.pack(pady=20)
 
 results = []
+status_labels = []
 
 async def main(prompt_user):
     response = await generate(prompt_user)
@@ -48,8 +50,10 @@ async def main(prompt_user):
 
 def start_main():
     prompt_user = entry_input.get()
-    entry_input.delete(0, 'end')  # очищаем сразу же при нажатии
-    ttk.Label(window, f"Обрабатывается: {prompt_user}").pack()
+    entry_input.delete(0, 'end')
+    status_label = ttk.Label(window, text=f"Обрабатывается: {prompt_user}")
+    status_label.pack()
+    status_labels.append(status_label)  # добавляем в список
     asyncio.create_task(main(prompt_user))
     check_results()
 
@@ -57,7 +61,8 @@ def check_results():
     if results:  # если есть результаты
         img, prompt = results.pop(0)
         show_image(img, prompt)
-        entry_input.delete(0, 'end')
+        if status_labels:
+            status_labels.pop(0).destroy()
     
     if results:  # если еще остались результаты - проверяем снова
         window.after(100, check_results)
