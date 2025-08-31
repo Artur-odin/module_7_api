@@ -6,6 +6,7 @@ from io import BytesIO
 from PIL import Image, ImageTk
 import requests
 import threading
+from tkinter import messagebox as mb
 
 requests_list = [] # очередь отправки запросов
 
@@ -16,16 +17,12 @@ def request_user(): #сохраняем запрос из поля ввода и
 
 async def response_AI(prompt_user): # обработка запроса ИИ асинхронно
     client = AsyncClient()
-    try:
-        response = await client.images.generate(
-            prompt=prompt_user,
-            model="flux",
-            response_format="url"
-            # Add any other necessary parameters
-        )
-        return (response.data[0].url, prompt_user)
-    except Exception as e:
-        print(f"Ошибка обработки: {e}, по запросу: {prompt_user}")
+    response = await client.images.generate(
+        prompt=prompt_user,
+        model="flux",
+        response_format="url"
+    )
+    return (response.data[0].url, prompt_user)
 
 async def load_image(url): # загрузка данных и преобразование в изображения тоже может занять время, тоже асинхронно
     try:
@@ -54,10 +51,19 @@ async def new_window(url, prompt_user): # два процесса: создан�
 
 async def main(prompt_user): # основная ф-я запускает два процесса: обработку и вывод запроса, загрузку и вывод изображения
     requests_list.append(prompt_user) # отправляем запрос в очередь
-    while requests_list.index(prompt_user) > 0: # если запрос не обработан ждем секнду
+    while requests_list and requests_list[0] != prompt_user: # если запрос не обработан ждем 5 секунд
         await asyncio.sleep(5)
-    result = await response_AI(prompt_user)
-    requests_list.pop(0)
+    try:
+        result = await response_AI(prompt_user)
+    except Exception as e:
+        window.after(0, lambda: mb.showerror("Ошибка сервера", 
+            f"Ошибка обработки: {e}\nПо запросу: {prompt_user}\nПопробуйте позже."
+        ))
+        if prompt_user in requests_list:
+            requests_list.remove(prompt_user)
+        return
+    if requests_list and requests_list[0] == prompt_user:
+        requests_list.pop(0)
     if result is None:
         print("Прерываем выполнение - нет URL")
         return
