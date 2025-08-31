@@ -5,6 +5,7 @@ from tkinter import ttk
 from io import BytesIO
 from PIL import Image, ImageTk
 import requests
+import threading
 #from g4f.Provider import (DeepInfra, OpenaiChat, HuggingChat, You, Gemini, Groq, OpenRouter)
 
 def request_user():
@@ -25,10 +26,10 @@ async def response_AI(prompt_user):
     except Exception as e:
         print(f"Ошибка обработки: {e}, по запросу: {prompt_user}")
 
-async def reg_res(): # ф-я 1
-    prompt_user = request_user()
-    url_and_promt = await response_AI(prompt_user)
-    return url_and_promt
+#async def reg_res(): # ф-я 1
+#    prompt_user = request_user()
+#    url_and_promt = await response_AI(prompt_user)
+#    return url_and_promt
 
 async def load_image(url): # ф-я 2
     try:
@@ -40,6 +41,7 @@ async def load_image(url): # ф-я 2
         return ImageTk.PhotoImage(img)
     except Exception as e:
         print(f"Ошибка загрузки изображения: {e}")
+        return None
 
 def show_image(img, prompt_user):
     new_window = tk.Toplevel(window)
@@ -54,14 +56,18 @@ async def new_window(url, prompt_user):
     if img:
         show_image(img, prompt_user)
 
-async def main():
-    url, prompt_user = await reg_res()
-    if url:
-        await new_window(url, prompt_user)
-        
-def start_main():
-    asyncio.run(main())
+async def main(prompt_user):
+    result = await response_AI(prompt_user)
+    if result is None:
+        print("Прерываем выполнение - нет URL")
+        return
+    if result:
+        await new_window(*result)
 
+def start_main():
+    prompt_user = request_user()
+    thread = threading.Thread(target=lambda: asyncio.run(main(prompt_user)))
+    thread.start()
         
 window = tk.Tk()
 window.title("Генератор изображений")
@@ -73,7 +79,5 @@ entry_input = ttk.Entry(window)
 entry_input.pack(pady=10)
 button_input = ttk.Button(window, text="Отправить", command=start_main)
 button_input.pack(pady=10)
-
-
 
 window.mainloop()
