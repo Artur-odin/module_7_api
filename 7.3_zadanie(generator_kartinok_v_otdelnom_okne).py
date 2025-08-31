@@ -7,16 +7,12 @@ from PIL import Image, ImageTk
 import requests
 #from g4f.Provider import (DeepInfra, OpenaiChat, HuggingChat, You, Gemini, Groq, OpenRouter)
 
-results = []
-labels = []
-
-def get_input_and_clear():
+def request_user():
     prompt = entry_input.get()
     entry_input.delete(0, 'end')
-    labels.append(ttk.Label(window, text=f"Обрабатывается: {prompt}"))
     return prompt
 
-async def generate(prompt_user):
+async def response_AI(prompt_user):
     client = AsyncClient()
     try:
         response = await client.images.generate(
@@ -25,13 +21,14 @@ async def generate(prompt_user):
             response_format="url"
             # Add any other necessary parameters
         )
-        return response.data[0].url
+        return (response.data[0].url, prompt_user)
     except Exception as e:
         print(f"Ошибка обработки: {e}, по запросу: {prompt_user}")
 
 async def reg_res(): # ф-я 1
-    prompt_user = get_input_and_clear()
-    await generate(prompt_user)
+    prompt_user = request_user()
+    url_and_promt = await response_AI(prompt_user)
+    return url_and_promt
 
 async def load_image(url): # ф-я 2
     try:
@@ -40,7 +37,7 @@ async def load_image(url): # ф-я 2
         img_data = BytesIO(response.content)
         img = Image.open(img_data)
         img.thumbnail((300, 300))
-        results.append(ImageTk.PhotoImage(img))
+        return ImageTk.PhotoImage(img)
     except Exception as e:
         print(f"Ошибка загрузки изображения: {e}")
 
@@ -52,33 +49,20 @@ def show_image(img, prompt_user):
     label.image = img  # сохраняем ссылку
     label.pack(pady=20)
 
+async def new_window(url, prompt_user):
+    img = await load_image(url)
+    if img:
+        show_image(img, prompt_user)
 
-async def main(prompt_user):
-    response = await generate(prompt_user)
-    if response:
-        img = await load_image(response)
-        results.append((img, prompt_user))
+async def main():
+    url, prompt_user = await reg_res()
+    if url:
+        await new_window(url, prompt_user)
+        
+def start_main():
+    asyncio.run(main())
 
-async def start_main(): # ф-я 1
-    prompt_user = entry_input.get()
-    asyncio.create_task(main(prompt_user))
-    entry_input.delete(0, 'end')
-    status_label = ttk.Label(window, text=f"Обрабатывается: {prompt_user}")
-    status_label.pack()
-    labels.append(status_label)  # добавляем в список
-    
-    check_results()
-
-def check_results():
-    if results:  # если есть результаты
-        img, prompt = results.pop(0)
-        show_image(img, prompt)
-        if labels:
-            labels.pop(0).destroy()
-    
-    if results:  # если еще остались результаты - проверяем снова
-        window.after(100, check_results)
-
+        
 window = tk.Tk()
 window.title("Генератор изображений")
 window.geometry("400x300")
