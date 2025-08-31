@@ -5,19 +5,11 @@ from tkinter import ttk
 from io import BytesIO
 from PIL import Image, ImageTk
 import requests
-#from g4f.Provider import (DeepInfra, OpenaiChat, HuggingChat, You, Gemini, Groq, OpenRouter)
-
-results = []
-labels = []
-
-def get_input_and_clear():
-    prompt = entry_input.get()
-    entry_input.delete(0, 'end')
-    labels.append(ttk.Label(window, text=f"Обрабатывается: {prompt}"))
-    return prompt
+import threading
+from g4f.client import AI2image
 
 async def generate(prompt_user):
-    client = AsyncClient()
+    client = AI2image()
     try:
         response = await client.images.generate(
             prompt=prompt_user,
@@ -29,18 +21,14 @@ async def generate(prompt_user):
     except Exception as e:
         print(f"Ошибка обработки: {e}, по запросу: {prompt_user}")
 
-async def reg_res(): # ф-я 1
-    prompt_user = get_input_and_clear()
-    await generate(prompt_user)
-
-async def load_image(url): # ф-я 2
+async def load_image(url):
     try:
         response = requests.get(url)
         response.raise_for_status()
         img_data = BytesIO(response.content)
         img = Image.open(img_data)
         img.thumbnail((300, 300))
-        results.append(ImageTk.PhotoImage(img))
+        return ImageTk.PhotoImage(img)
     except Exception as e:
         print(f"Ошибка загрузки изображения: {e}")
 
@@ -52,6 +40,7 @@ def show_image(img, prompt_user):
     label.image = img  # сохраняем ссылку
     label.pack(pady=20)
 
+results = []
 
 async def main(prompt_user):
     response = await generate(prompt_user)
@@ -59,13 +48,13 @@ async def main(prompt_user):
         img = await load_image(response)
         results.append((img, prompt_user))
 
-async def start_main(): # ф-я 1
+def start_main():
     prompt_user = entry_input.get()
-    asyncio.create_task(main(prompt_user))
-    entry_input.delete(0, 'end')
-    status_label = ttk.Label(window, text=f"Обрабатывается: {prompt_user}")
-    status_label.pack()
-    labels.append(status_label)  # добавляем в список
+    entry_input.delete(0, 'end')  # очищаем сразу же при нажатии
+    ttk.Label(window, text=f"Обрабатывается: {prompt_user}").pack()
+    
+    thread = threading.Thread(target=lambda: asyncio.run(main(prompt_user)))
+    thread.start()
     
     check_results()
 
@@ -73,8 +62,7 @@ def check_results():
     if results:  # если есть результаты
         img, prompt = results.pop(0)
         show_image(img, prompt)
-        if labels:
-            labels.pop(0).destroy()
+        #entry_input.delete(0, 'end')
     
     if results:  # если еще остались результаты - проверяем снова
         window.after(100, check_results)
@@ -89,7 +77,5 @@ entry_input = ttk.Entry(window)
 entry_input.pack(pady=10)
 button_input = ttk.Button(window, text="Отправить", command=start_main)
 button_input.pack(pady=10)
-
-
 
 window.mainloop()
