@@ -6,14 +6,15 @@ from io import BytesIO
 from PIL import Image, ImageTk
 import requests
 import threading
-#from g4f.Provider import (DeepInfra, OpenaiChat, HuggingChat, You, Gemini, Groq, OpenRouter)
 
-def request_user():
-    prompt = entry_input.get()
+requests_list = [] # очередь отправки запросов
+
+def request_user(): #сохраняем запрос из поля ввода и очищаем поле ввода
+    prompt = entry_input.get().strip()
     entry_input.delete(0, 'end')
     return prompt
 
-async def response_AI(prompt_user):
+async def response_AI(prompt_user): # обработка запроса ИИ асинхронно
     client = AsyncClient()
     try:
         response = await client.images.generate(
@@ -26,12 +27,7 @@ async def response_AI(prompt_user):
     except Exception as e:
         print(f"Ошибка обработки: {e}, по запросу: {prompt_user}")
 
-#async def reg_res(): # ф-я 1
-#    prompt_user = request_user()
-#    url_and_promt = await response_AI(prompt_user)
-#    return url_and_promt
-
-async def load_image(url): # ф-я 2
+async def load_image(url): # загрузка данных и преобразование в изображения тоже может занять время, тоже асинхронно
     try:
         response = requests.get(url)
         response.raise_for_status()
@@ -43,7 +39,7 @@ async def load_image(url): # ф-я 2
         print(f"Ошибка загрузки изображения: {e}")
         return None
 
-def show_image(img, prompt_user):
+def show_image(img, prompt_user): # создание и зугрузка изображения в новое окно
     new_window = tk.Toplevel(window)
     new_window.title(f"Изображение по запросу: {prompt_user}")
     new_window.geometry("400x300")
@@ -51,24 +47,31 @@ def show_image(img, prompt_user):
     label.image = img  # сохраняем ссылку
     label.pack(pady=20)
 
-async def new_window(url, prompt_user):
+async def new_window(url, prompt_user): # два процесса: создание картинги и загрузка в новое окно
     img = await load_image(url)
     if img:
         show_image(img, prompt_user)
 
-async def main(prompt_user):
+async def main(prompt_user): # основная ф-я запускает два процесса: обработку и вывод запроса, загрузку и вывод изображения
+    requests_list.append(prompt_user) # отправляем запрос в очередь
+    while requests_list.index(prompt_user) > 0: # если запрос не обработан ждем секнду
+        await asyncio.sleep(5)
     result = await response_AI(prompt_user)
+    requests_list.pop(0)
     if result is None:
         print("Прерываем выполнение - нет URL")
         return
     if result:
         await new_window(*result)
 
-def start_main():
+def start_main(): # сохраняем и освобождаем поле ввода и запускаем основную ф-ю в одельном процессе
     prompt_user = request_user()
+    if not prompt_user:
+        return print("Пустой запрос")
+    # пытался избежать использования данной ф-ии, но удалить данные из поля ввода для нового ввода оказалось невозможным из-за блокировки GUI
     thread = threading.Thread(target=lambda: asyncio.run(main(prompt_user)))
     thread.start()
-        
+
 window = tk.Tk()
 window.title("Генератор изображений")
 window.geometry("400x300")
