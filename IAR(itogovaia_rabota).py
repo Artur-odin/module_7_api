@@ -3,7 +3,7 @@ from tkinter import ttk
 from tkinter import messagebox as mb
 import requests
 
-# основные криптовалюты
+# словарь с основными криптовалютами
 cripto_currency = {
     "bitcoin": "Bitcoin (Биткоин)",
     "ethereum": "Ethereum (Эфириум)",
@@ -37,11 +37,11 @@ currencies = {
 def valuti(crypto_id):
     
     try:
-        url = f'https://api.coingecko.com/api/v3/coins/{crypto_id}?localization=false&tickers=false&market_data=true&community_data=false&developer_data=false&sparkline=false'
+        url = f"https://api.coingecko.com/api/v3/coins/{crypto_id}?localization=false&tickers=false&market_data=true&community_data=false&developer_data=false&sparkline=false"
         answer = requests.get(url)# 
         answer.raise_for_status()
         data = answer.json()
-        all_currencies = list(data['market_data']['current_price'].keys())# составляем из json список всех возможных валют для обмена (фиатные, криптовалюта и др.)
+        all_currencies = list(data["market_data"]["current_price"].keys())# составляем из json список всех возможных валют для обмена (фиатные, криптовалюта и др.)
         fiats_currencies = [curr for curr in all_currencies if curr in currencies] # оставляем только те, что есть в словаре currencies
         
         return fiats_currencies
@@ -54,8 +54,8 @@ def crypto_label(event):# ф-я обновляет метку криптовал
     label_1.config(text=name)
     
     fiats_currencies = valuti(crypto_id) # список фиатных валют доступных для обмена полученные по API запросу
-    fiats_combobox['values'] = fiats_currencies # обновляем второй комбобокс доступными фиатными валютами
-    fiats_combobox.set('')  # сбрасываем выбор
+    fiats_combobox["values"] = fiats_currencies # обновляем второй комбобокс доступными фиатными валютами
+    fiats_combobox.set("")  # сбрасываем выбор
     label_2.config(text="")  # очищаем метку
 
 def fiats_label(event):# ф-я обновляет метку фиатной валюты
@@ -68,7 +68,8 @@ def exchange():# ф-я запрашивает данные курса по API
     
     if crypto_id and fiat_code: 
         try:
-            answer = requests.get(f'https://api.coingecko.com/api/v3/simple/price?ids={crypto_id}&vs_currencies={fiat_code}')
+            #получаем данные по запросу API о курсе определенной криптовалюты к определенной фиатной валюте
+            answer = requests.get(f"https://api.coingecko.com/api/v3/simple/price?ids={crypto_id}&vs_currencies={fiat_code}")
             answer.raise_for_status()
             data = answer.json()
             
@@ -86,8 +87,8 @@ def exchange():# ф-я запрашивает данные курса по API
         mb.showwarning("Внимание", "Выберите обе валюты")
 
 root = Tk()
-root.title("Курс криптовалют")
-root.geometry("400x350")
+root.title('Курс обмена криптовалюты «КриптоКурс»')
+root.geometry("420x350")
 
 Label(text="Криптовалюта:").pack(padx=10, pady=5)
 crypto_combobox = ttk.Combobox(values=list(cripto_currency.keys()))
